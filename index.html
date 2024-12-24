@@ -9,45 +9,32 @@
 <body>
   <header>
     <h1>Blog Platform</h1>
+    <nav>
+      <button id="loginBtn">Login</button>
+      <button id="registerBtn">Register</button>
+    </nav>
   </header>
+
+  <div id="authContainer" class="modal">
+    <div class="auth-form">
+      <h2 id="authTitle">Login</h2>
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <button id="authSubmit">Submit</button>
+      <button id="closeModal">Close</button>
+    </div>
+  </div>
+
   <div class="container">
     <div class="post-form">
       <textarea placeholder="What's on your mind?" id="postContent"></textarea>
       <button id="createPost">Create Post</button>
     </div>
     <div class="posts" id="postsContainer">
-      <!-- Example post -->
-      <div class="post">
-        <h3>Example Post</h3>
-        <p>This is an example post content.</p>
-        <div class="actions">
-          <button>Like</button>
-          <button>Comment</button>
-        </div>
-      </div>
+      <!-- Posts will be dynamically added here -->
     </div>
   </div>
 
-  <script>
-    // Example JavaScript logic for adding a post
-    document.getElementById('createPost').addEventListener('click', () => {
-      const content = document.getElementById('postContent').value;
-      if (content.trim()) {
-        const postContainer = document.getElementById('postsContainer');
-        const postElement = document.createElement('div');
-        postElement.classList.add('post');
-        postElement.innerHTML = `
-          <h3>New Post</h3>
-          <p>${content}</p>
-          <div class="actions">
-            <button>Like</button>
-            <button>Comment</button>
-          </div>
-        `;
-        postContainer.prepend(postElement);
-        document.getElementById('postContent').value = '';
-      }
-    });
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
