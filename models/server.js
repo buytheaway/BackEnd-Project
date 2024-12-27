@@ -26,7 +26,7 @@ app.post('/api/register', async (req, res) => {
 });
 
 // API для создания поста
-app.post('/api/posts', async (req, res) => {
+app.post('/api/6', async (req, res) => {
   const { userId, content } = req.body;
   try {
     const post = new Post({ userId, content });

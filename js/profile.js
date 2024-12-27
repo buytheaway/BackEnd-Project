@@ -1,3 +1,4 @@
+/*
 // Check if a user is logged in
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 const profileUsername = document.getElementById('profileUsername');
@@ -22,3 +23,4 @@ logoutBtn.addEventListener('click', () => {
   alert('You have been logged out.');
   window.location.href = '../index.html';
 });
+*/
