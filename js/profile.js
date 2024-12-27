@@ -8,7 +8,7 @@ const logoutBtn = document.getElementById('logoutBtn');
 // Redirect if no user is logged in
 if (!currentUser) {
   alert('Please log in to view your profile.');
-  window.location.href = 'index.html';
+  window.location.href = '../index.html';
 } else {
   // Display user details
   profileUsername.textContent = currentUser.username;
@@ -20,5 +20,5 @@ if (!currentUser) {
 logoutBtn.addEventListener('click', () => {
   localStorage.removeItem('currentUser');
   alert('You have been logged out.');
-  window.location.href = 'index.html';
+  window.location.href = '../index.html';
 });
