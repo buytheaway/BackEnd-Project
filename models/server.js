@@ -26,6 +26,20 @@ app.post('/api/register', (req, res) => {
   res.status(201).json({ message: 'User registered successfully', user: newUser });
 });
 
+
+
+app.post('/api/6', async (req, res) => {
+  const { userId, content } = req.body;
+  try {
+    const post = new Post({ userId, content });
+    await post.save();
+    res.status(201).json({ message: 'Post created successfully', post });
+  } catch (err) {
+    res.status(400).json({ message: 'Error creating post', error: err.message });
+  }
+});
+
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
