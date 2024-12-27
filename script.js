@@ -14,6 +14,8 @@ const registerBtn = document.getElementById('registerBtn');
 const postContent = document.getElementById('postContent');
 const createPostBtn = document.getElementById('createPost');
 const postsContainer = document.getElementById('postsContainer');
+const profileName = document.getElementById('profileName');
+const logoutBtn = document.getElementById('logoutBtn');
 
 let currentUser = null;
 
@@ -40,12 +42,20 @@ authSubmit.addEventListener('click', () => {
     const user = users.find(user => user.username === username && user.password === password);
     if (user) {
       currentUser = user;
+      profileName.textContent = username;
       alert(`Welcome, ${username}!`);
       authContainer.style.display = 'none';
     } else {
       alert('Invalid credentials!');
     }
   }
+});
+
+// Logout
+logoutBtn.addEventListener('click', () => {
+  currentUser = null;
+  profileName.textContent = 'Guest';
+  alert('You have been logged out.');
 });
 
 // Close modal
@@ -95,6 +105,32 @@ function displayPosts() {
     postsContainer.appendChild(postElement);
   });
 }
+authSubmit.addEventListener('click', () => {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (authTitle.textContent === 'Register') {
+    if (users.some(user => user.username === username)) {
+      alert('Username already exists!');
+    } else {
+      const newUser = { username, password, email: '', postsCount: 0 };
+      users.push(newUser);
+      alert('Registration successful! Please log in.');
+      authContainer.style.display = 'none';
+    }
+  } else {
+    const user = users.find(user => user.username === username && user.password === password);
+    if (user) {
+      currentUser = user;
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+      profileName.textContent = username;
+      alert(`Welcome, ${username}!`);
+      authContainer.style.display = 'none';
+    } else {
+      alert('Invalid credentials!');
+    }
+  }
+});
 
 // Like a post
 function likePost(index) {
