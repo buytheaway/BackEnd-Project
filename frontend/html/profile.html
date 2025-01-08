@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/profile.css">
+    <title>Profile</title>
+</head>
+<body>
+    <header>
+        <h1>User Profile</h1>
+        <nav>
+            <button onclick="logoutUser()">Logout</button>
+        </nav>
+    </header>
+    <main>
+        <div class="profile-container">
+            <h2 id="profileUsername">Username</h2>
+            <p id="profileDetails">Email: example@example.com</p>
+        </div>
+        <div class="post-section">
+            <h3>Create a Post</h3>
+            <textarea id="postContent" placeholder="Write something..."></textarea>
+            <button onclick="createPost()">Create Post</button>
+        </div>
+        <div class="posts" id="postsContainer">
+            <h3>Your Posts</h3>
+            <!-- Posts will be loaded dynamically -->
+        </div>
+    </main>
+    <script src="../js/reg_log.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', checkSession);
+    </script>
+</body>
+</html>
