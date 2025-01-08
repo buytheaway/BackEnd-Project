@@ -1,8 +1,12 @@
 @echo off
-echo Starting Blog Platform...
 
-:: Navigate to the project folder
-cd C:\Users\qwety\Documents\GitHub\BackEnd-Project
+cd /d "%~dp0"
+
+:: Перейти в родительскую папку
+cd ..
+
+:: Вывести текущую директорию для проверки
+echo Current directory: %cd%
 
 :: Launch the backend server in the background
 echo Launching Backend...
