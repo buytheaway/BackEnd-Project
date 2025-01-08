@@ -3,34 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../css/profile.css">
     <title>Profile</title>
+    <link rel="stylesheet" href="../css/profile.css">
 </head>
 <body>
     <header>
-        <h1>User Profile</h1>
-        <nav>
-            <button onclick="logoutUser()">Logout</button>
-        </nav>
+        <h1>Welcome, <span id="username"></span>!</h1>
+        <button onclick="logoutUser()">Logout</button>
     </header>
     <main>
-        <div class="profile-container">
-            <h2 id="profileUsername">Username</h2>
-            <p id="profileDetails">Email: example@example.com</p>
-        </div>
-        <div class="post-section">
-            <h3>Create a Post</h3>
-            <textarea id="postContent" placeholder="Write something..."></textarea>
-            <button onclick="createPost()">Create Post</button>
-        </div>
-        <div class="posts" id="postsContainer">
-            <h3>Your Posts</h3>
-            <!-- Posts will be loaded dynamically -->
-        </div>
+        <section>
+            <h2>Create a Post</h2>
+            <textarea id="postContent" placeholder="Write your post here..."></textarea>
+            <button onclick="createPost()">Post</button>
+        </section>
+        <section>
+            <h2>Your Posts</h2>
+            <div id="postsContainer">
+                <!-- Posts will load here -->
+            </div>
+        </section>
     </main>
     <script src="../js/reg_log.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', checkSession);
+        document.addEventListener('DOMContentLoaded', () => {
+            const username = localStorage.getItem('username');
+            if (!username) {
+                alert('Please log in first!');
+                window.location.href = 'login.html';
+            }
+            document.getElementById('username').innerText = username;
+            loadPosts();
+        });
     </script>
 </body>
 </html>
