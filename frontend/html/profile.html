@@ -13,28 +13,29 @@
     </header>
     <main>
         <section>
-            <h2>Create a Post</h2>
-            <textarea id="postContent" placeholder="Write your post here..."></textarea>
-            <button onclick="createPost()">Post</button>
-        </section>
-        <section>
-            <h2>Your Posts</h2>
-            <div id="postsContainer">
-                <!-- Posts will load here -->
-            </div>
+            <h2>Your Profile</h2>
+            <p><strong>Email:</strong> <span id="email"></span></p>
         </section>
     </main>
-    <script src="../js/reg_log.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const username = localStorage.getItem('username');
-            if (!username) {
-                alert('Please log in first!');
-                window.location.href = 'login.html';
-            }
-            document.getElementById('username').innerText = username;
-            loadPosts();
+            // Получение данных пользователя из сессии через сервер
+            fetch('/profile-data')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('username').textContent = data.username;
+                    document.getElementById('email').textContent = data.email;
+                })
+                .catch(err => {
+                    console.error('Error loading profile data:', err);
+                    alert('Session expired. Please log in again.');
+                    window.location.href = '/login';
+                });
         });
+
+        function logoutUser() {
+            window.location.href = '/logout';
+        }
     </script>
 </body>
 </html>
