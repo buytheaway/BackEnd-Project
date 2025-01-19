@@ -190,13 +190,25 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
-// Получение всех постов с возможностью сортировки и выводом на отдельную страницу
-app.get('/all-posts', async (req, res) => {
-    const { tag, sort } = req.query;
+// Получение всех постов с возможностью подгрузки по частям
+app.get('/api/all-posts', async (req, res) => {
+    const { tag, sort, page = 1, username } = req.query;
+    const limit = 10; // Количество постов на страницу
     try {
+        console.log("Received params:", { tag, sort, page, username }); // Логируем параметры
         let filter = {};
         if (tag) {
             filter.tags = tag;
+        }
+
+        if (username) {
+            const user = await User.findOne({ username });
+            if (user) {
+                filter.author = user._id;
+            } else {
+                console.log("No user found with username:", username);
+                return res.json({ posts: [], hasNextPage: false });
+            }
         }
 
         let sortOption = { createdAt: -1 }; // Default sorting by newest
@@ -204,35 +216,25 @@ app.get('/all-posts', async (req, res) => {
             sortOption = { createdAt: 1 };
         }
 
-        const posts = await Post.find(filter).sort(sortOption).populate('author', 'username email');
+        const skip = (page - 1) * limit;
+        const posts = await Post.find(filter)
+            .sort(sortOption)
+            .skip(skip)
+            .limit(limit)
+            .populate('author', 'username email');
 
-        res.sendFile(path.join(ROOT_DIR, 'frontend/html/all-posts.html'));
+        const totalPosts = await Post.countDocuments(filter);
+        const hasNextPage = page * limit < totalPosts;
+
+        res.json({ posts, hasNextPage });
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Error fetching all posts');
+        console.error("Error in /api/all-posts:", err);
+        res.status(500).json({ error: 'Error fetching posts' });
     }
 });
 
-// API для динамической загрузки постов
-app.get('/api/all-posts', async (req, res) => {
-    const { tag, sort } = req.query;
-    try {
-        let filter = {};
-        if (tag) {
-            filter.tags = tag;
-        }
-
-        let sortOption = { createdAt: -1 }; // Default sorting by newest
-        if (sort === 'oldest') {
-            sortOption = { createdAt: 1 };
-        }
-
-        const posts = await Post.find(filter).sort(sortOption).populate('author', 'username email');
-        res.json(posts);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error fetching posts' });
-    }
+app.get('/all-posts', (req, res) => {
+    res.sendFile(path.join(ROOT_DIR, 'frontend/html/all-posts.html'));
 });
 
 // Запуск сервера

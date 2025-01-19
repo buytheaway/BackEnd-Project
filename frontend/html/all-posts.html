@@ -9,62 +9,23 @@
 <body>
     <header>
         <h1>All Posts</h1>
-        <a href="/profile">Back to Profile</a>
+        <a class="button" href="/profile">Back to Profile</a>
         <form id="filterForm">
             <label for="tag">Filter by Tag:</label>
-            <input type="text" id="tag" name="tag" placeholder="Enter tag">
+            <input class="placeholder" type="text" id="tag" name="tag" placeholder="Enter tag">
+            <label for="username">Filter by Username:</label>
+            <input class="placeholder" type="text" id="username" name="username" placeholder="Enter username">
             <label for="sort">Sort:</label>
-            <select id="sort" name="sort">
-                <option value="">Newest</option>
-                <option value="oldest">Oldest</option>
+            <select class="placeholder" id="sort" name="sort">
+                <option class="placeholder" value="newest">Newest</option>
+                <option class="placeholder" value="oldest">Oldest</option>
             </select>
             <button type="submit">Apply</button>
-        </form>
+        </form>  
     </header>
     <main id="postsContainer">
-        <!-- Posts will load here -->
+        <!-- Posts -->
     </main>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('filterForm');
-            const postsContainer = document.getElementById('postsContainer');
-
-            const loadPosts = (tag = '', sort = '') => {
-                const query = new URLSearchParams();
-                if (tag) query.append('tag', tag);
-                if (sort) query.append('sort', sort);
-
-                fetch(`/api/all-posts?${query.toString()}`)
-                    .then(response => response.json())
-                    .then(posts => {
-                        postsContainer.innerHTML = ''; // Clear previous posts
-                        posts.forEach(post => {
-                            const postDiv = document.createElement('div');
-                            postDiv.classList.add('post');
-                            postDiv.innerHTML = `
-                                <h3>${post.title}</h3>
-                                <p>${post.content}</p>
-                                <p><strong>Tags:</strong> ${post.tags.join(', ')}</p>
-                                <p><em>By: ${post.author.username} (${post.author.email})</em></p>
-                                <hr>
-                            `;
-                            postsContainer.appendChild(postDiv);
-                        });
-                    })
-                    .catch(err => console.error('Error loading posts:', err));
-            };
-
-            // Load posts on page load
-            loadPosts();
-
-            // Filter form submission
-            form.addEventListener('submit', event => {
-                event.preventDefault();
-                const tag = document.getElementById('tag').value;
-                const sort = document.getElementById('sort').value;
-                loadPosts(tag, sort);
-            });
-        });
-    </script>
+    <script src="../js/posts.js"></script>
 </body>
-</html>
+</html> 

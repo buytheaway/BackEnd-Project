@@ -21,7 +21,11 @@ header {
 .post {
     margin-bottom: 20px;
 }
-
+.placeholder{
+    background-color: #505050;
+    color: #fff;
+    border: #000 solid;
+}
 
 header h1 {
     margin: 0;
