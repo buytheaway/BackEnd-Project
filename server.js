@@ -48,7 +48,6 @@ const postSchema = new mongoose.Schema({
 
 const Post = mongoose.model('Post', postSchema);
 
-// Middleware
 app.use((req, res, next) => {
     res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' http: https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';");
     next();
@@ -56,6 +55,7 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(ROOT_DIR, 'frontend')));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(session({
     secret: 'your_secret_key',
     resave: false,
@@ -145,6 +145,47 @@ app.post('/create-post', async (req, res) => {
     }
 });
 
+app.delete('/api/posts/:id', async (req, res) => {
+    if (req.session.user) {
+        try {
+            const postId = req.params.id;
+            const post = await Post.findOneAndDelete({ _id: postId, author: req.session.user.id });
+            if (!post) {
+                return res.status(404).json({ error: 'Post not found or you are not the author' });
+            }
+            res.json({ message: 'Post deleted successfully' });
+        } catch (err) {
+            console.error('Error deleting post:', err);
+            res.status(500).json({ error: 'Error deleting post' });
+        }
+    } else {
+        res.status(401).json({ error: 'Unauthorized' });
+    }
+});
+
+app.put('/api/posts/:id', async (req, res) => {
+    if (req.session.user) {
+        try {
+            const postId = req.params.id;
+            const { title, content, tags } = req.body;
+            const updatedPost = await Post.findOneAndUpdate(
+                { _id: postId, author: req.session.user.id },
+                { title, content, tags: tags.split(',').map(tag => tag.trim()) },
+                { new: true }
+            );
+            if (!updatedPost) {
+                return res.status(404).json({ error: 'Post not found or you are not the author' });
+            }
+            res.json({ message: 'Post updated successfully', post: updatedPost });
+        } catch (err) {
+            console.error('Error updating post:', err);
+            res.status(500).json({ error: 'Error updating post' });
+        }
+    } else {
+        res.status(401).json({ error: 'Unauthorized' });
+    }
+});
+
 app.get('/favicon.ico', (req, res) => {
     const faviconPath = path.join(ROOT_DIR, 'frontend/favicon.ico');
     if (fs.existsSync(faviconPath)) {
@@ -173,7 +214,7 @@ app.post('/login', async (req, res) => {
     try {
         const user = await User.findOne({ email });
         if (user && await bcrypt.compare(password, user.password)) {
-            req.session.user = { id: user._id, email: user.email }; // Сохранение данных пользователя
+            req.session.user = { id: user._id, email: user.email };
             res.redirect('/profile');
         } else {
             res.send('Invalid email or password.');
@@ -190,12 +231,10 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
-// Получение всех постов с возможностью подгрузки по частям
 app.get('/api/all-posts', async (req, res) => {
     const { tag, sort, page = 1, username } = req.query;
     const limit = 10; // Количество постов на страницу
     try {
-        console.log("Received params:", { tag, sort, page, username }); // Логируем параметры
         let filter = {};
         if (tag) {
             filter.tags = tag;
@@ -206,12 +245,11 @@ app.get('/api/all-posts', async (req, res) => {
             if (user) {
                 filter.author = user._id;
             } else {
-                console.log("No user found with username:", username);
                 return res.json({ posts: [], hasNextPage: false });
             }
         }
 
-        let sortOption = { createdAt: -1 }; // Default sorting by newest
+        let sortOption = { createdAt: -1 }; // Default
         if (sort === 'oldest') {
             sortOption = { createdAt: 1 };
         }

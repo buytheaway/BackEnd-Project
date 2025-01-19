@@ -139,3 +139,28 @@ button:hover {
     cursor: pointer;
     transition: background-color 0.3s;
 }
+
+.post {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.post button {
+    margin: 5px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.post .edit-post {
+    background-color: #4caf50;
+    color: white;
+}
+
+.post .delete-post {
+    background-color: #f44336;
+    color: white;
+}

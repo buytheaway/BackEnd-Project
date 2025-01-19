@@ -9,92 +9,41 @@
 <body>
     <header>
         <h1>Welcome, <span id="username"></span>!</h1>
+        <a href="/all-posts" class="button">View All Posts</a>
+        <p><strong>Email:</strong> <span id="email"></span></p>
         <button onclick="logoutUser()">Logout</button>
     </header>
+
     <main>
-        <section>
-            <h2>Your Profile</h2>
-            <p><strong>Email:</strong> <span id="email"></span></p>   
-            <a href="/all-posts" class="button">Posts</a>
-        </section>
+        <!-- Форма для создания постов -->
         <section>
             <h2>Create a Post</h2>
-            <form id="postForm">
-                <label for="title">Title:</label>
-                <input type="text" id="title" name="title" required><br><br>
-
-                <label for="content">Content:</label>
-                <textarea id="content" name="content" required></textarea><br><br>
-
-                <label for="tags">Tags (comma-separated):</label>
-                <input type="text" id="tags" name="tags"><br><br>
-
+            <form id="createPostForm">
+                <input type="text" id="postTitle" placeholder="Post Title" required>
+                <textarea id="postContent" placeholder="Write your post content here..." required></textarea>
+                <input type="text" id="postTags" placeholder="Tags (comma-separated)">
                 <button type="submit">Create Post</button>
             </form>
         </section>
+
+        <!-- Список постов пользователя -->
         <section>
             <h2>Your Posts</h2>
             <div id="postsContainer">
-                <!-- Posts -->
+                <!-- Посты будут загружаться сюда -->
             </div>
         </section>
+
+        <!-- Форма для редактирования поста -->
+        <div id="editForm" style="display: none;">
+            <h2>Edit Post</h2>
+            <input type="text" id="editTitle" placeholder="New Title">
+            <textarea id="editContent" placeholder="New Content"></textarea>
+            <input type="text" id="editTags" placeholder="Tags (comma-separated)">
+            <button onclick="saveEdit()">Save</button>
+            <button onclick="closeEditForm()">Cancel</button>
+        </div>
     </main>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            fetch('/profile-data')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('username').textContent = data.username;
-                    document.getElementById('email').textContent = data.email;
-                })
-                .catch(err => {
-                    console.error('Error loading profile data:', err);
-                    alert('Session expired. Please log in again.');
-                    window.location.href = '/login';
-                });
-
-            fetch('/user-posts')
-                .then(response => response.json())
-                .then(posts => {
-                    const postsContainer = document.getElementById('postsContainer');
-                    posts.forEach(post => {
-                        const postDiv = document.createElement('div');
-                        postDiv.classList.add('post');
-                        postDiv.innerHTML = `
-                            <h3>${post.title}</h3>
-                            <p>${post.content}</p>
-                            <p><strong>Tags:</strong> ${post.tags.join(', ')}</p>
-                        `;
-                        postsContainer.appendChild(postDiv);
-                    });
-                })
-                .catch(err => console.error('Error loading posts:', err));
-        });
-
-        // Handle post creation
-        document.getElementById('postForm').addEventListener('submit', (event) => {
-            event.preventDefault();
-            const formData = new FormData(event.target);
-
-            fetch('/create-post', {
-                method: 'POST',
-                body: new URLSearchParams(formData)
-            })
-            .then(response => {
-                if (response.ok) {
-                    alert('Post created successfully!');
-                    window.location.reload();
-                } else {
-                    alert('Error creating post.');
-                }
-            })
-            .catch(err => console.error('Error:', err));
-        });
-
-        // Logout user
-        function logoutUser() {
-            window.location.href = '/logout';
-        }
-    </script>
+    <script src="../js/profile.js"></script>
 </body>
 </html>
