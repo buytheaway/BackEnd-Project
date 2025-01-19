@@ -1,4 +1,7 @@
 /* Основные стили */
+*{
+    text-decoration: none;
+}
 body {
     margin: 0;
     font-family: Arial, sans-serif;
@@ -15,6 +18,10 @@ header {
     justify-content: space-between;
     align-items: center;
 }
+.post {
+    margin-bottom: 20px;
+}
+
 
 header h1 {
     margin: 0;
@@ -114,4 +121,17 @@ button:hover {
     margin: 10px 0 0;
     color: #B0B0B0;
     font-size: 14px;
+}
+
+
+
+.button {
+    padding: 10px;
+    background-color: #3A3A3A;
+    color: #FFFFFF;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }

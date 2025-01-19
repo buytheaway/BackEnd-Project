@@ -60,7 +60,8 @@ app.use(session({
     secret: 'your_secret_key',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: 'mongodb://127.0.0.1:27017/blog_platform' })
+    store: MongoStore.create({ mongoUrl: 'mongodb://127.0.0.1:27017/blog_platform' }),
+    cookie: { maxAge: 3600000 } // Cookie действует 1 час
 }));
 
 // Маршруты
@@ -77,63 +78,49 @@ app.get('/register', (req, res) => {
 });
 
 app.get('/profile', async (req, res) => {
-    console.log('Session Data:', req.session); // Лог для отладки
+    if (req.session.user) {
+        try {
+            res.sendFile(path.join(ROOT_DIR, 'frontend/html/profile.html'));
+        } catch (err) {
+            console.error(err);
+            res.status(500).send('Error loading profile page');
+        }
+    } else {
+        res.redirect('/login');
+    }
+});
+
+app.get('/profile-data', async (req, res) => {
     if (req.session.user) {
         try {
             const user = await User.findById(req.session.user.id);
             if (!user) {
-                return res.redirect('/login');
+                return res.status(404).json({ error: 'User not found' });
             }
-
-            const userPosts = await Post.find({ author: req.session.user.id });
-
-            // Передача информации о пользователе на страницу профиля
-            let postsHtml = '';
-            userPosts.forEach(post => {
-                postsHtml += `
-                    <div>
-                        <h3>${post.title}</h3>
-                        <p>${post.content}</p>
-                        <p><strong>Tags:</strong> ${post.tags.join(', ')}</p>
-                        <hr>
-                    </div>
-                `;
+            res.json({
+                username: user.username,
+                email: user.email
             });
-
-            res.send(`
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Profile</title>
-                </head>
-                <body>
-                    <h1>Welcome, ${user.username}!</h1>
-                    <form action="/create-post" method="POST">
-                        <label for="title">Title:</label>
-                        <input type="text" id="title" name="title" required><br><br>
-
-                        <label for="content">Content:</label>
-                        <textarea id="content" name="content" rows="5" required></textarea><br><br>
-
-                        <label for="tags">Tags (comma-separated):</label>
-                        <input type="text" id="tags" name="tags"><br><br>
-
-                        <button type="submit">Create Post</button>
-                    </form>
-                    <h2>Your Posts</h2>
-                    ${postsHtml}
-                    <a href="/logout">Logout</a>
-                </body>
-                </html>
-            `);
         } catch (err) {
             console.error(err);
-            res.status(500).send('An error occurred while loading the profile page.');
+            res.status(500).json({ error: 'Server error' });
         }
     } else {
-        res.redirect('/login');
+        res.status(401).json({ error: 'Unauthorized' });
+    }
+});
+
+app.get('/user-posts', async (req, res) => {
+    if (req.session.user) {
+        try {
+            const userPosts = await Post.find({ author: req.session.user.id });
+            res.json(userPosts);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: 'Error fetching posts' });
+        }
+    } else {
+        res.status(401).json({ error: 'Unauthorized' });
     }
 });
 
@@ -201,6 +188,51 @@ app.post('/login', async (req, res) => {
 app.get('/logout', (req, res) => {
     req.session.destroy();
     res.redirect('/login');
+});
+
+// Получение всех постов с возможностью сортировки и выводом на отдельную страницу
+app.get('/all-posts', async (req, res) => {
+    const { tag, sort } = req.query;
+    try {
+        let filter = {};
+        if (tag) {
+            filter.tags = tag;
+        }
+
+        let sortOption = { createdAt: -1 }; // Default sorting by newest
+        if (sort === 'oldest') {
+            sortOption = { createdAt: 1 };
+        }
+
+        const posts = await Post.find(filter).sort(sortOption).populate('author', 'username email');
+
+        res.sendFile(path.join(ROOT_DIR, 'frontend/html/all-posts.html'));
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error fetching all posts');
+    }
+});
+
+// API для динамической загрузки постов
+app.get('/api/all-posts', async (req, res) => {
+    const { tag, sort } = req.query;
+    try {
+        let filter = {};
+        if (tag) {
+            filter.tags = tag;
+        }
+
+        let sortOption = { createdAt: -1 }; // Default sorting by newest
+        if (sort === 'oldest') {
+            sortOption = { createdAt: 1 };
+        }
+
+        const posts = await Post.find(filter).sort(sortOption).populate('author', 'username email');
+        res.json(posts);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error fetching posts' });
+    }
 });
 
 // Запуск сервера
