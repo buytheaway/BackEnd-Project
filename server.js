@@ -37,6 +37,17 @@ userSchema.pre('save', async function (next) {
 
 const User = mongoose.model('User', userSchema);
 
+// Создание схемы поста
+const postSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    content: { type: String, required: true },
+    tags: [{ type: String }],
+    author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const Post = mongoose.model('Post', postSchema);
+
 // Middleware
 app.use((req, res, next) => {
     res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' http: https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';");
@@ -74,8 +85,49 @@ app.get('/profile', async (req, res) => {
                 return res.redirect('/login');
             }
 
+            const userPosts = await Post.find({ author: req.session.user.id });
+
             // Передача информации о пользователе на страницу профиля
-            res.sendFile(path.join(ROOT_DIR, 'frontend/html/profile.html'));
+            let postsHtml = '';
+            userPosts.forEach(post => {
+                postsHtml += `
+                    <div>
+                        <h3>${post.title}</h3>
+                        <p>${post.content}</p>
+                        <p><strong>Tags:</strong> ${post.tags.join(', ')}</p>
+                        <hr>
+                    </div>
+                `;
+            });
+
+            res.send(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Profile</title>
+                </head>
+                <body>
+                    <h1>Welcome, ${user.username}!</h1>
+                    <form action="/create-post" method="POST">
+                        <label for="title">Title:</label>
+                        <input type="text" id="title" name="title" required><br><br>
+
+                        <label for="content">Content:</label>
+                        <textarea id="content" name="content" rows="5" required></textarea><br><br>
+
+                        <label for="tags">Tags (comma-separated):</label>
+                        <input type="text" id="tags" name="tags"><br><br>
+
+                        <button type="submit">Create Post</button>
+                    </form>
+                    <h2>Your Posts</h2>
+                    ${postsHtml}
+                    <a href="/logout">Logout</a>
+                </body>
+                </html>
+            `);
         } catch (err) {
             console.error(err);
             res.status(500).send('An error occurred while loading the profile page.');
@@ -85,23 +137,24 @@ app.get('/profile', async (req, res) => {
     }
 });
 
-app.get('/profile-data', async (req, res) => {
+app.post('/create-post', async (req, res) => {
     if (req.session.user) {
+        const { title, content, tags } = req.body;
         try {
-            const user = await User.findById(req.session.user.id);
-            if (!user) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-            res.json({
-                username: user.username,
-                email: user.email
+            const newPost = new Post({
+                title,
+                content,
+                tags: tags.split(',').map(tag => tag.trim()),
+                author: req.session.user.id
             });
+            await newPost.save();
+            res.redirect('/profile');
         } catch (err) {
             console.error(err);
-            res.status(500).json({ error: 'Server error' });
+            res.status(500).send('Error creating post');
         }
     } else {
-        res.status(401).json({ error: 'Unauthorized' });
+        res.status(401).send('Unauthorized');
     }
 });
 
