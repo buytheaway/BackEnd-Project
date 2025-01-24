@@ -13,6 +13,9 @@ const PORT = 8080;
 // Устанавливаем корневую директорию проекта
 const ROOT_DIR = path.resolve(__dirname, '../BackEnd-Project');
 
+const spotifyRoutes = require('./SpotifyWeb');
+app.use('/', spotifyRoutes);
+
 // Настройка подключения к MongoDB
 mongoose.connect('mongodb://127.0.0.1:27017/blog_platform');
 const db = mongoose.connection;
@@ -274,6 +277,7 @@ app.get('/api/all-posts', async (req, res) => {
 app.get('/all-posts', (req, res) => {
     res.sendFile(path.join(ROOT_DIR, 'frontend/html/all-posts.html'));
 });
+
 
 // Запуск сервера
 app.listen(PORT, () => {
