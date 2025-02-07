@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Load user profile data
     fetch('/profile-data')
         .then(response => response.json())
         .then(data => {
@@ -8,19 +9,40 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 document.getElementById('username').innerText = data.username;
                 document.getElementById('email').innerText = data.email;
-                loadPosts();
             }
         })
         .catch(err => console.error('Error loading profile data:', err));
-});
 
-// Функция для загрузки постов пользователя
-function loadPosts() {
+    // Form for creating a post
+    const createPostForm = document.getElementById('createPostForm');
+    createPostForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('postTitle').value;
+        const content = document.getElementById('postContent').value;
+        const tags = document.getElementById('postTags').value;
+
+        try {
+            const response = await fetch('/create-post', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content, tags })
+            });
+
+            if (response.ok) {
+                alert('Post created successfully!');
+                location.reload();
+            } else {
+                alert('Error creating post.');
+            }
+        } catch (err) {
+            console.error('Error:', err);
+        }
+    });
+
+    const postsContainer = document.getElementById('postsContainer');
     fetch('/user-posts')
         .then(response => response.json())
         .then(posts => {
-            const postsContainer = document.getElementById('postsContainer');
-            postsContainer.innerHTML = '';
             posts.forEach(post => {
                 const postDiv = document.createElement('div');
                 postDiv.classList.add('post');
@@ -35,94 +57,80 @@ function loadPosts() {
             });
         })
         .catch(err => console.error('Error loading posts:', err));
-}
 
-// Создание нового поста
-document.getElementById('createPostForm').addEventListener('submit', (event) => {
-    event.preventDefault();
-    const title = document.getElementById('postTitle').value;
-    const content = document.getElementById('postContent').value;
-    const tags = document.getElementById('postTags').value;
+    // Form for sending emails
+    const emailForm = document.getElementById('emailForm');
+    emailForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const recipientEmail = document.getElementById('recipientEmail').value;
+        const message = document.getElementById('message').value;
 
-    fetch('/create-post', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content, tags })
-    })
-        .then(response => {
-            if (response.ok) {
-                alert('Post created successfully!');
-                loadPosts();
-                document.getElementById('createPostForm').reset();
-            } else {
-                alert('Error creating post.');
-            }
-        })
-        .catch(err => console.error('Error creating post:', err));
+        try {
+            const response = await fetch('/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recipientEmail, message })
+            });
+
+            const result = await response.json();
+            alert(result.message);
+        } catch (err) {
+            console.error('Error sending email:', err);
+        }
+    });
 });
 
-// Удаление поста
+// Functions to handle edit and delete posts
+function editPost(postId, title, content, tags) {
+    document.getElementById('editForm').style.display = 'block';
+    document.getElementById('editTitle').value = title;
+    document.getElementById('editContent').value = content;
+    document.getElementById('editTags').value = tags;
+
+    const saveEditBtn = document.getElementById('saveEditBtn');
+    saveEditBtn.onclick = async () => {
+        try {
+            const updatedTitle = document.getElementById('editTitle').value;
+            const updatedContent = document.getElementById('editContent').value;
+            const updatedTags = document.getElementById('editTags').value;
+
+            const response = await fetch(`/api/posts/${postId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: updatedTitle,
+                    content: updatedContent,
+                    tags: updatedTags
+                })
+            });
+
+            if (response.ok) {
+                alert('Post updated successfully!');
+                location.reload();
+            } else {
+                alert('Error updating post.');
+            }
+        } catch (err) {
+            console.error('Error updating post:', err);
+        }
+    };
+}
+
 function deletePost(postId) {
     if (confirm('Are you sure you want to delete this post?')) {
         fetch(`/api/posts/${postId}`, { method: 'DELETE' })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    alert(data.message);
-                    loadPosts();
+            .then(response => {
+                if (response.ok) {
+                    alert('Post deleted successfully!');
+                    location.reload();
                 } else {
-                    alert('Error deleting post: ' + data.error);
+                    alert('Error deleting post.');
                 }
             })
             .catch(err => console.error('Error deleting post:', err));
     }
 }
 
-// Открытие формы редактирования
-function editPost(postId, title, content, tags) {
-    document.getElementById('editForm').style.display = 'block';
-    document.getElementById('editForm').setAttribute('data-post-id', postId);
-    document.getElementById('editTitle').value = title;
-    document.getElementById('editContent').value = content;
-    document.getElementById('editTags').value = tags;
-}
-
-// Закрытие формы редактирования
 function closeEditForm() {
     document.getElementById('editForm').style.display = 'none';
-    document.getElementById('editForm').removeAttribute('data-post-id');
-}
-
-// Сохранение изменений поста
-function saveEdit() {
-    const postId = document.getElementById('editForm').getAttribute('data-post-id');
-    const title = document.getElementById('editTitle').value;
-    const content = document.getElementById('editContent').value;
-    const tags = document.getElementById('editTags').value;
-
-    fetch(`/api/posts/${postId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content, tags })
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                alert('Post updated successfully!');
-                closeEditForm();
-                loadPosts();
-            } else {
-                alert('Error updating post: ' + data.error);
-            }
-        })
-        .catch(err => console.error('Error updating post:', err));
-}
-
-// Выход из аккаунта
-function logoutUser() {
-    fetch('/logout')
-        .then(() => {
-            window.location.href = '/login';
-        })
-        .catch(err => console.error('Error logging out:', err));
 }

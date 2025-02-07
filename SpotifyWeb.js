@@ -1,3 +1,4 @@
+/*
 const express = require('express');
 const SpotifyWebApi = require('spotify-web-api-node');
 const path = require('path');
@@ -112,3 +113,4 @@ app.get('/get-token', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+*/

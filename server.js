@@ -6,15 +6,23 @@ const MongoStore = require('connect-mongo');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = 8080;
 
+const crypto = require('crypto');
+
+// Генерация токена
+const generateToken = () => {
+    return crypto.randomBytes(20).toString('hex');
+};
+
+app.use(express.static(path.join(__dirname, 'frontend')));
+
 // Устанавливаем корневую директорию проекта
 const ROOT_DIR = path.resolve(__dirname, '../BackEnd-Project');
-
-const spotifyRoutes = require('./SpotifyWeb');
-app.use('/', spotifyRoutes);
+const tokenFilePath = path.join(__dirname, 'tokens', 'user_tokens.json');
 
 // Настройка подключения к MongoDB
 mongoose.connect('mongodb://127.0.0.1:27017/blog_platform');
@@ -27,7 +35,9 @@ db.once('open', () => {
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true }
+    password: { type: String, required: true },
+    verified: { type: Boolean, default: false },
+    verificationToken: { type: String, default: null }
 });
 
 // Хэширование пароля перед сохранением
@@ -198,33 +208,133 @@ app.get('/favicon.ico', (req, res) => {
     }
 });
 
+// Сохранение токена
+const saveToken = (token) => {
+    fs.writeFileSync(tokenFilePath, JSON.stringify(token));
+    console.log('Token saved successfully.');
+};
+
+app.get('/verify-email/:token', async (req, res) => {
+    const { token } = req.params;
+    try {
+        const user = await User.findOne({ verificationToken: token });
+        if (!user) {
+            return res.status(400).send('Invalid or expired token.');
+        }
+        user.verified = true;
+        user.verificationToken = null;
+        await user.save();
+
+        res.send('Email verified successfully. You can now log in.');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error verifying email.');
+    }
+});
+
+
+app.get('/verify/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const user = await User.findByIdAndUpdate(id, { isVerified: true });
+        if (!user) {
+            return res.status(404).send('User not found.');
+        }
+        res.send('Email verified successfully. You can now log in.');
+    } catch (err) {
+        console.error('Error verifying email:', err);
+        res.status(500).send('Error verifying email.');
+    }
+});
+
 // Регистрация пользователя
 app.post('/register', async (req, res) => {
     const { username, email, password } = req.body;
+
     try {
-        const newUser = new User({ username, email, password });
+        const token = generateToken();
+
+        const newUser = new User({
+            username,
+            email,
+            password,
+            verificationToken: token,
+            verified: false
+        });
+
         await newUser.save();
-        res.redirect('/login');
+
+        // Отправка Верефикационного email
+        const verificationLink = `http://localhost:${PORT}/verify-email/${token}`;
+        await transporter.sendMail({
+            from: 'your-email@gmail.com',
+            to: email,
+            subject: 'Verify Your Email',
+            text: `Hi ${username},\n\nPlease verify your email by clicking the link below:\n${verificationLink}`
+        });
+
+        res.send('Registration successful. Please check your email to verify your account.');
     } catch (err) {
-        console.error(err);
-        res.send('Error: Unable to register. Username or email might already exist.');
+        console.error('Error registering user:', err);
+        res.status(500).send('Error: Unable to register.');
     }
 });
 
 // Логин пользователя
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
+
     try {
         const user = await User.findOne({ email });
-        if (user && await bcrypt.compare(password, user.password)) {
+
+        if (!user) {
+            return res.send('User not found.');
+        }
+
+        if (!user.verified) {
+            return res.send('Please verify your email before logging in.');
+        }
+
+        if (await bcrypt.compare(password, user.password)) {
             req.session.user = { id: user._id, email: user.email };
             res.redirect('/profile');
         } else {
             res.send('Invalid email or password.');
         }
     } catch (err) {
-        console.error(err);
+        console.error('Error during login:', err);
         res.send('Error: Unable to log in.');
+    }
+});
+
+//Отправка сообщений
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'qwetyuiop741852963@gmail.com',
+        pass: 'ywyt sjdb urrl qjxp'
+    }
+});
+
+app.post('/send-email', async (req, res) => {
+    const { recipientEmail, message } = req.body;
+
+    if (!recipientEmail || !message) {
+        return res.status(400).json({ message: 'Recipient email and message are required.' });
+    }
+
+    try {
+        await transporter.sendMail({
+            from: 'qwetyuiop741852963@gmail.com',
+            to: recipientEmail,
+            subject: 'Message from Your Website',
+            text: message
+        });
+
+        res.json({ message: 'Email sent successfully!' });
+    } catch (err) {
+        console.error('Error sending email:', err);
+        res.status(500).json({ message: 'Failed to send email.' });
     }
 });
 
@@ -236,7 +346,7 @@ app.get('/logout', (req, res) => {
 
 app.get('/api/all-posts', async (req, res) => {
     const { tag, sort, page = 1, username } = req.query;
-    const limit = 10; // Количество постов на страницу
+    const limit = 10;
     try {
         let filter = {};
         if (tag) {
@@ -252,7 +362,7 @@ app.get('/api/all-posts', async (req, res) => {
             }
         }
 
-        let sortOption = { createdAt: -1 }; // Default
+        let sortOption = { createdAt: -1 };
         if (sort === 'oldest') {
             sortOption = { createdAt: 1 };
         }
@@ -278,8 +388,6 @@ app.get('/all-posts', (req, res) => {
     res.sendFile(path.join(ROOT_DIR, 'frontend/html/all-posts.html'));
 });
 
-
-// Запуск сервера
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
