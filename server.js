@@ -18,7 +18,7 @@ const generateToken = () => {
     return crypto.randomBytes(20).toString('hex');
 };
 
-app.use(express.static(path.join(__dirname, 'frontend')));
+app.use(express.static(path.join(__dirname, 'frontend/html')));
 
 // Устанавливаем корневую директорию проекта
 const ROOT_DIR = path.resolve(__dirname, '../BackEnd-Project');
