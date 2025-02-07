@@ -279,7 +279,7 @@ app.post('/register', async (req, res) => {
         res.status(500).send('Error: Unable to register.');
     }
 });
-
+    
 // Логин пользователя
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
