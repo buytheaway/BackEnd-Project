@@ -19,6 +19,9 @@ const generateToken = () => {
 };
 
 app.use(express.static(path.join(__dirname, 'frontend/html')));
+app.use('/css', express.static(path.join(__dirname, 'frontend/css')));
+app.use('/js', express.static(path.join(__dirname, 'frontend/js')));
+
 
 // Устанавливаем корневую директорию проекта
 const ROOT_DIR = path.resolve(__dirname, '../BackEnd-Project');
