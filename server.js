@@ -78,9 +78,10 @@ app.use(session({
     secret: 'your_secret_key',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: 'mongodb://127.0.0.1:27017/blog_platform' }),
+    store: MongoStore.create({ mongoUrl: MONGO_URI }), 
     cookie: { maxAge: 3600000 } // Cookie действует 1 час
 }));
+
 
 // Маршруты
 app.get('/', (req, res) => {
