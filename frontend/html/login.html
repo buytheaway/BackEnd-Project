@@ -9,6 +9,14 @@
     <link rel="stylesheet" href="../css/login.css">
 </head>
 <body>
+    <header>
+        <h1>Welcome, <span id="username"></span>!</h1>
+        <a href="/home.html" class="button">🏠 Home</a>
+        <a href="/all-posts" class="button">📜 View All Posts</a>
+        <p><strong>Email:</strong> <span id="email"></span></p>
+        <button onclick="logoutUser()">Logout</button>
+    </header>
+    
     <div class="container">
         <h1>Login</h1>
         <form action="/login" method="POST">

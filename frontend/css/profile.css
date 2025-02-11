@@ -147,6 +147,23 @@ button:hover {
     border-radius: 5px;
 }
 
+.button {
+    padding: 10px;
+    background-color: #3A3A3A;
+    color: #FFFFFF;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-decoration: none;
+}
+
+.button:hover {
+    background-color: #505050;
+}
+
+
 .post button {
     margin: 5px;
     padding: 5px 10px;
