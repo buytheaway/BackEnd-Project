@@ -289,7 +289,9 @@ app.post('/register', async (req, res) => {
         await newUser.save();
 
         // Отправка Верефикационного email
-        const verificationLink = `http://localhost:${PORT}/verify-email/${token}`;
+        const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+        const verificationLink = `${BASE_URL}/verify-email/${token}`;
+
         await transporter.sendMail({
             from: 'your-email@gmail.com',
             to: email,
