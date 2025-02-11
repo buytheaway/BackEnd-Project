@@ -416,6 +416,55 @@ app.get('/api/all-posts', async (req, res) => {
     }
 });
 
+// API для рекомендаций (рандомные посты из базы данных)
+app.get('/api/recommended-posts', async (req, res) => {
+    try {
+        const posts = await Post.aggregate([{ $sample: { size: 5 } }]); // Берём 5 случайных постов
+        res.json(posts);
+    } catch (err) {
+        console.error("Error fetching recommended posts:", err);
+        res.status(500).json({ error: 'Error fetching posts' });
+    }
+});
+
+
+app.get('/home', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/html/home.html'));
+});
+
+// API для популярных постов
+app.get('/api/popular-posts', async (req, res) => {
+    try {
+        const posts = await Post.find().sort({ likes: -1 }).limit(5);
+        res.json(posts);
+    } catch (err) {
+        console.error("Error fetching popular posts:", err);
+        res.status(500).json({ error: 'Error fetching posts' });
+    }
+});
+
+// API для последних постов
+app.get('/api/latest-posts', async (req, res) => {
+    try {
+        const posts = await Post.find().sort({ createdAt: -1 }).limit(5);
+        res.json(posts);
+    } catch (err) {
+        console.error("Error fetching latest posts:", err);
+        res.status(500).json({ error: 'Error fetching posts' });
+    }
+});
+
+// API для рекомендаций (рандомные посты)
+app.get('/api/recommended-posts', async (req, res) => {
+    try {
+        const posts = await Post.aggregate([{ $sample: { size: 5 } }]);
+        res.json(posts);
+    } catch (err) {
+        console.error("Error fetching recommended posts:", err);
+        res.status(500).json({ error: 'Error fetching posts' });
+    }
+});
+
 
 app.get('/all-posts', (req, res) => {
     res.sendFile(path.resolve(__dirname, 'frontend/html/all-posts.html'));
