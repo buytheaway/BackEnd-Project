@@ -103,7 +103,15 @@ app.get('/login', (req, res) => {
 
 
 app.get('/register', (req, res) => {
-    res.sendFile(path.join(ROOT_DIR, 'frontend/html/reg.html'));
+    const filePath = path.join(__dirname, 'frontend/html/reg.html'); // Проверь путь!
+    console.log(`Serving login page from: ${filePath}`);
+
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.error("Error serving file:", err);
+            res.status(500).send("Internal Server Error");
+        }
+    });
 });
 
 app.get('/profile', async (req, res) => {
