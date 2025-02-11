@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                alert(data.error);
+                showNotification(data.error, 'error');
                 window.location.href = '/login';
             } else {
                 document.getElementById('username').innerText = data.username;
@@ -29,10 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.ok) {
-                alert('Post created successfully!');
+                showNotification('Post created successfully!', 'success');
                 location.reload();
             } else {
-                alert('Error creating post.');
+                showNotification('Error creating post.', 'error');
             }
         } catch (err) {
             console.error('Error:', err);
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const result = await response.json();
-            alert(result.message);
+            showNotification(result.message, 'success');
         } catch (err) {
             console.error('Error sending email:', err);
         }
@@ -105,10 +105,10 @@ function editPost(postId, title, content, tags) {
             });
 
             if (response.ok) {
-                alert('Post updated successfully!');
+                showNotification('Post updated successfully!', 'success');
                 location.reload();
             } else {
-                alert('Error updating post.');
+                showNotification('Error updating post.', 'error');
             }
         } catch (err) {
             console.error('Error updating post:', err);
@@ -121,10 +121,10 @@ function deletePost(postId) {
         fetch(`/api/posts/${postId}`, { method: 'DELETE' })
             .then(response => {
                 if (response.ok) {
-                    alert('Post deleted successfully!');
+                    showNotification('Post deleted successfully!', 'success');
                     location.reload();
                 } else {
-                    alert('Error deleting post.');
+                    showNotification('Error deleting post.', 'error');
                 }
             })
             .catch(err => console.error('Error deleting post:', err));
@@ -134,3 +134,37 @@ function deletePost(postId) {
 function closeEditForm() {
     document.getElementById('editForm').style.display = 'none';
 }
+
+// Уведомления (всплывающие)
+function showNotification(message, type = 'info') {
+    let notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerText = message;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.remove();
+    }, 3000); // Уведомление исчезает через 3 секунды
+}
+
+// Добавляем стили для уведомлений
+const style = document.createElement('style');
+style.innerHTML = `
+    .notification {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 20px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        border-radius: 5px;
+        font-size: 14px;
+        z-index: 1000;
+        transition: opacity 0.3s ease-in-out;
+    }
+    .notification.error { background: red; }
+    .notification.success { background: green; }
+`;
+document.head.appendChild(style);

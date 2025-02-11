@@ -416,6 +416,7 @@ app.get('/api/all-posts', async (req, res) => {
     }
 });
 
+
 app.get('/all-posts', (req, res) => {
     res.sendFile(path.join(ROOT_DIR, 'frontend/html/all-posts.html'));
 });
