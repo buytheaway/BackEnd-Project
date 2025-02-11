@@ -116,16 +116,19 @@ app.get('/register', (req, res) => {
 
 app.get('/profile', async (req, res) => {
     if (req.session.user) {
-        try {
-            res.sendFile(path.join(ROOT_DIR, 'frontend/html/profile.html'));
-        } catch (err) {
-            console.error(err);
-            res.status(500).send('Error loading profile page');
-        }
+        const filePath = path.join(__dirname, 'frontend/html/profile.html');
+        console.log(`Serving profile page from: ${filePath}`);
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error("Error serving profile page:", err);
+                res.status(500).send("Internal Server Error");
+            }
+        });
     } else {
         res.redirect('/login');
     }
 });
+
 
 app.get('/profile-data', async (req, res) => {
     if (req.session.user) {
