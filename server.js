@@ -28,7 +28,7 @@ const ROOT_DIR = path.resolve(__dirname, '../BackEnd-Project');
 const tokenFilePath = path.join(__dirname, 'tokens', 'user_tokens.json');
 
 // Настройка подключения к MongoDB
-const MONGO_URI = 'mongodb+srv://HardParty:roronoazoro667@cluster0.reikk.mongodb.net/blog_platform?retryWrites=true&w=majority&appName=Cluster0';
+const MONGO_URI = "mongodb+srv://HardParty:roronoazoro667@cluster0.reikk.mongodb.net/blog_platform?retryWrites=true&w=majority&tls=true";
 
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
