@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 showNotification('Post created successfully!', 'success');
-                setTimeout(() => location.reload(), 1000); // Обновление страницы после 1 сек
+                location.reload();
             } else {
                 showNotification('Error creating post.', 'error');
             }
@@ -106,7 +106,7 @@ function editPost(postId, title, content, tags) {
 
             if (response.ok) {
                 showNotification('Post updated successfully!', 'success');
-                setTimeout(() => location.reload(), 1000);
+                location.reload();
             } else {
                 showNotification('Error updating post.', 'error');
             }
@@ -117,16 +117,18 @@ function editPost(postId, title, content, tags) {
 }
 
 function deletePost(postId) {
-    fetch(`/api/posts/${postId}`, { method: 'DELETE' })
-        .then(response => {
-            if (response.ok) {
-                showNotification('Post deleted successfully!', 'success');
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                showNotification('Error deleting post.', 'error');
-            }
-        })
-        .catch(err => console.error('Error deleting post:', err));
+    if (confirm('Are you sure you want to delete this post?')) {
+        fetch(`/api/posts/${postId}`, { method: 'DELETE' })
+            .then(response => {
+                if (response.ok) {
+                    showNotification('Post deleted successfully!', 'success');
+                    location.reload();
+                } else {
+                    showNotification('Error deleting post.', 'error');
+                }
+            })
+            .catch(err => console.error('Error deleting post:', err));
+    }
 }
 
 function closeEditForm() {

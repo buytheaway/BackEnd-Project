@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile</title>
     <link rel="stylesheet" href="../css/profile.css">
-    <script src="../js/notification.js" defer></script>
-    <script src="../js/profile.js" defer></script>
+    <script src="/js/notification.js"></script>
+
 </head>
 <body>
     <header>
@@ -31,7 +31,9 @@
         <!-- User's posts list -->
         <section>
             <h2>Your Posts</h2>
-            <div id="postsContainer"></div>
+            <div id="postsContainer">
+                <!-- User posts will be dynamically loaded here -->
+            </div>
         </section>
 
         <!-- Edit post form -->
@@ -49,12 +51,15 @@
             <h2>Send an Email</h2>
             <form id="emailForm">
                 <label for="recipientEmail">Recipient Email:</label>
-                <input type="email" id="recipientEmail" required>
+                <input type="email" id="recipientEmail" name="recipientEmail" required>
                 <label for="message">Message:</label>
-                <textarea id="message" required></textarea>
+                <textarea id="message" name="message" required></textarea>
                 <button type="submit">Send Email</button>
             </form>
         </section>
     </main>
+
+    <!-- Подключаем внешний JS -->
+    <script src="../js/profile.js"></script>
 </body>
 </html>
