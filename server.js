@@ -71,7 +71,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(express.static(path.join(ROOT_DIR, 'frontend')));
+app.use(express.static(path.join(__dirname, 'frontend')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(session({
