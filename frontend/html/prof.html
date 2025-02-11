@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="../css/profile.css">
+    <script src="../js/notification.js" defer></script>
+    <script src="../js/profile.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Profile Page</h1>
+        <button onclick="logoutUser()">Logout</button>
+    </header>
+
+    <main>
+        <section class="profile-info">
+            <h2>Personal Info</h2>
+            <p><strong>Username:</strong> <span id="username"></span></p>
+            <p><strong>Email:</strong> <span id="email"></span></p>
+        </section>
+
+        <section class="actions">
+            <h2>Actions</h2>
+            <a href="/all-posts" class="button">View All Posts</a>
+            <a href="/create-post" class="button">Create a Post</a>
+        </section>
+
+        <section>
+            <h2>Your Posts</h2>
+            <div id="postsContainer"></div>
+        </section>
+    </main>
+</body>
+</html>

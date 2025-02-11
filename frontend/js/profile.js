@@ -15,69 +15,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Form for creating a post
     const createPostForm = document.getElementById('createPostForm');
-    createPostForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const title = document.getElementById('postTitle').value;
-        const content = document.getElementById('postContent').value;
-        const tags = document.getElementById('postTags').value;
+    if (createPostForm) {
+        createPostForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+            const tags = document.getElementById('postTags').value;
 
-        try {
-            const response = await fetch('/create-post', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, content, tags })
-            });
+            try {
+                const response = await fetch('/create-post', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content, tags })
+                });
 
-            if (response.ok) {
-                showNotification('Post created successfully!', 'success');
-                location.reload();
-            } else {
-                showNotification('Error creating post.', 'error');
+                if (response.ok) {
+                    showNotification('Post created successfully!', 'success');
+                    setTimeout(() => location.reload(), 1000); // Обновление страницы после 1 сек
+                } else {
+                    showNotification('Error creating post.', 'error');
+                }
+            } catch (err) {
+                console.error('Error:', err);
             }
-        } catch (err) {
-            console.error('Error:', err);
-        }
-    });
+        });
+    }
 
     const postsContainer = document.getElementById('postsContainer');
-    fetch('/user-posts')
-        .then(response => response.json())
-        .then(posts => {
-            posts.forEach(post => {
-                const postDiv = document.createElement('div');
-                postDiv.classList.add('post');
-                postDiv.innerHTML = `
-                    <h3>${post.title}</h3>
-                    <p>${post.content}</p>
-                    <p><strong>Tags:</strong> ${post.tags.join(', ')}</p>
-                    <button onclick="editPost('${post._id}', '${post.title}', '${post.content}', '${post.tags.join(', ')}')">Edit</button>
-                    <button onclick="deletePost('${post._id}')">Delete</button>
-                `;
-                postsContainer.appendChild(postDiv);
-            });
-        })
-        .catch(err => console.error('Error loading posts:', err));
+    if (postsContainer) {
+        fetch('/user-posts')
+            .then(response => response.json())
+            .then(posts => {
+                posts.forEach(post => {
+                    const postDiv = document.createElement('div');
+                    postDiv.classList.add('post');
+                    postDiv.innerHTML = `
+                        <h3>${post.title}</h3>
+                        <p>${post.content}</p>
+                        <p><strong>Tags:</strong> ${post.tags.join(', ')}</p>
+                        <button onclick="editPost('${post._id}', '${post.title}', '${post.content}', '${post.tags.join(', ')}')">Edit</button>
+                        <button onclick="deletePost('${post._id}')">Delete</button>
+                    `;
+                    postsContainer.appendChild(postDiv);
+                });
+            })
+            .catch(err => console.error('Error loading posts:', err));
+    }
 
     // Form for sending emails
     const emailForm = document.getElementById('emailForm');
-    emailForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const recipientEmail = document.getElementById('recipientEmail').value;
-        const message = document.getElementById('message').value;
+    if (emailForm) {
+        emailForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const recipientEmail = document.getElementById('recipientEmail').value;
+            const message = document.getElementById('message').value;
 
-        try {
-            const response = await fetch('/send-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ recipientEmail, message })
-            });
+            try {
+                const response = await fetch('/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recipientEmail, message })
+                });
 
-            const result = await response.json();
-            showNotification(result.message, 'success');
-        } catch (err) {
-            console.error('Error sending email:', err);
-        }
-    });
+                const result = await response.json();
+                showNotification(result.message, 'success');
+            } catch (err) {
+                console.error('Error sending email:', err);
+            }
+        });
+    }
 });
 
 // Functions to handle edit and delete posts
@@ -106,7 +112,7 @@ function editPost(postId, title, content, tags) {
 
             if (response.ok) {
                 showNotification('Post updated successfully!', 'success');
-                location.reload();
+                setTimeout(() => location.reload(), 1000);
             } else {
                 showNotification('Error updating post.', 'error');
             }
@@ -117,18 +123,16 @@ function editPost(postId, title, content, tags) {
 }
 
 function deletePost(postId) {
-    if (confirm('Are you sure you want to delete this post?')) {
-        fetch(`/api/posts/${postId}`, { method: 'DELETE' })
-            .then(response => {
-                if (response.ok) {
-                    showNotification('Post deleted successfully!', 'success');
-                    location.reload();
-                } else {
-                    showNotification('Error deleting post.', 'error');
-                }
-            })
-            .catch(err => console.error('Error deleting post:', err));
-    }
+    fetch(`/api/posts/${postId}`, { method: 'DELETE' })
+        .then(response => {
+            if (response.ok) {
+                showNotification('Post deleted successfully!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification('Error deleting post.', 'error');
+            }
+        })
+        .catch(err => console.error('Error deleting post:', err));
 }
 
 function closeEditForm() {
