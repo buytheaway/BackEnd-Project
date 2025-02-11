@@ -418,10 +418,9 @@ app.get('/api/all-posts', async (req, res) => {
 
 
 app.get('/all-posts', (req, res) => {
-    const filePath = path.join(ROOT_DIR, 'frontend/html/all-posts.html');
-    console.log("Trying to serve file:", filePath);
-    res.sendFile(filePath);
+    res.sendFile(path.resolve(__dirname, 'frontend/html/all-posts.html'));
 });
+
 
 
 app.listen(PORT, () => {
