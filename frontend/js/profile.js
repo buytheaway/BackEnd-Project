@@ -41,6 +41,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function logoutUser() {
+        fetch('/logout')
+            .then(() => {
+                window.location.href = '/login';
+            })
+            .catch(err => console.error('Error logging out:', err));
+    }
+    
     const postsContainer = document.getElementById('postsContainer');
     if (postsContainer) {
         fetch('/user-posts')
