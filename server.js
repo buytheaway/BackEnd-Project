@@ -84,8 +84,6 @@ app.use(session({
 }));
 
 
-
-
 // Маршруты
 const jwt = require('jsonwebtoken');
 require('dotenv').config(); // Загружаем переменные окружения
@@ -480,8 +478,7 @@ app.get('/api/recommended-posts', async (req, res) => {
     }
 });
 
-// JWT
-require('dotenv').config();
+
 
 
 
