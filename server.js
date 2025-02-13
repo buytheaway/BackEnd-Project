@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 
+
 const app = express();
 const PORT = 8080;
 
@@ -83,157 +84,112 @@ app.use(session({
 }));
 
 
+const authenticateJWT = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1]; // Берем токен из заголовка Authorization
+
+    if (!token) {
+        return res.status(401).json({ message: 'Unauthorized: No token provided' });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(403).json({ message: 'Forbidden: Invalid token' });
+        }
+        req.user = decoded; // Сохраняем данные пользователя в req.user
+        next();
+    });
+};
+
 // Маршруты
-app.get('/', (req, res) => {
-    res.sendFile(path.join(ROOT_DIR, 'frontend/html/index.html'));
-});
 
-app.get('/login', (req, res) => {
-    const filePath = path.join(__dirname, 'frontend/html/login.html'); // Проверь путь!
-    console.log(`Serving login page from: ${filePath}`);
+// Получение данных профиля
+app.get('/profile-data', authenticateJWT, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
 
-    res.sendFile(filePath, (err) => {
-        if (err) {
-            console.error("Error serving file:", err);
-            res.status(500).send("Internal Server Error");
-        }
-    });
-});
-
-
-
-app.get('/register', (req, res) => {
-    const filePath = path.join(__dirname, 'frontend/html/reg.html'); // Проверь путь!
-    console.log(`Serving login page from: ${filePath}`);
-
-    res.sendFile(filePath, (err) => {
-        if (err) {
-            console.error("Error serving file:", err);
-            res.status(500).send("Internal Server Error");
-        }
-    });
-});
-
-app.get('/profile', async (req, res) => {
-    if (req.session.user) {
-        const filePath = path.join(__dirname, 'frontend/html/profile.html');
-        console.log(`Serving profile page from: ${filePath}`);
-        res.sendFile(filePath, (err) => {
-            if (err) {
-                console.error("Error serving profile page:", err);
-                res.status(500).send("Internal Server Error");
-            }
+        res.json({
+            username: user.username,
+            email: user.email
         });
-    } else {
-        res.redirect('/login');
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
-
-app.get('/profile-data', async (req, res) => {
-    if (req.session.user) {
-        try {
-            const user = await User.findById(req.session.user.id);
-            if (!user) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-            res.json({
-                username: user.username,
-                email: user.email
-            });
-        } catch (err) {
-            console.error(err);
-            res.status(500).json({ error: 'Server error' });
-        }
-    } else {
-        res.status(401).json({ error: 'Unauthorized' });
+// Получение постов пользователя
+app.get('/user-posts', authenticateJWT, async (req, res) => {
+    try {
+        const userPosts = await Post.find({ author: req.user.id });
+        res.json(userPosts);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error fetching posts' });
     }
 });
 
-app.get('/user-posts', async (req, res) => {
-    if (req.session.user) {
-        try {
-            const userPosts = await Post.find({ author: req.session.user.id });
-            res.json(userPosts);
-        } catch (err) {
-            console.error(err);
-            res.status(500).json({ error: 'Error fetching posts' });
-        }
-    } else {
-        res.status(401).json({ error: 'Unauthorized' });
+// Создание поста
+app.post('/create-post', authenticateJWT, async (req, res) => {
+    const { title, content, tags } = req.body;
+    try {
+        const newPost = new Post({
+            title,
+            content,
+            tags: tags.split(',').map(tag => tag.trim()),
+            author: req.user.id
+        });
+        await newPost.save();
+        res.redirect('/profile');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error creating post');
     }
 });
 
-app.post('/create-post', async (req, res) => {
-    if (req.session.user) {
+// Удаление поста
+app.delete('/api/posts/:id', authenticateJWT, async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const post = await Post.findOneAndDelete({ _id: postId, author: req.user.id });
+        if (!post) return res.status(404).json({ error: 'Post not found or you are not the author' });
+
+        res.json({ message: 'Post deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting post:', err);
+        res.status(500).json({ error: 'Error deleting post' });
+    }
+});
+
+// Обновление поста
+app.put('/api/posts/:id', authenticateJWT, async (req, res) => {
+    try {
+        const postId = req.params.id;
         const { title, content, tags } = req.body;
-        try {
-            const newPost = new Post({
-                title,
-                content,
-                tags: tags.split(',').map(tag => tag.trim()),
-                author: req.session.user.id
-            });
-            await newPost.save();
-            res.redirect('/profile');
-        } catch (err) {
-            console.error(err);
-            res.status(500).send('Error creating post');
-        }
-    } else {
-        res.status(401).send('Unauthorized');
+        const updatedPost = await Post.findOneAndUpdate(
+            { _id: postId, author: req.user.id },
+            { title, content, tags: tags.split(',').map(tag => tag.trim()) },
+            { new: true }
+        );
+        if (!updatedPost) return res.status(404).json({ error: 'Post not found or you are not the author' });
+
+        res.json({ message: 'Post updated successfully', post: updatedPost });
+    } catch (err) {
+        console.error('Error updating post:', err);
+        res.status(500).json({ error: 'Error updating post' });
     }
 });
 
-app.delete('/api/posts/:id', async (req, res) => {
-    if (req.session.user) {
-        try {
-            const postId = req.params.id;
-            const post = await Post.findOneAndDelete({ _id: postId, author: req.session.user.id });
-            if (!post) {
-                return res.status(404).json({ error: 'Post not found or you are not the author' });
-            }
-            res.json({ message: 'Post deleted successfully' });
-        } catch (err) {
-            console.error('Error deleting post:', err);
-            res.status(500).json({ error: 'Error deleting post' });
-        }
-    } else {
-        res.status(401).json({ error: 'Unauthorized' });
-    }
-});
-
-app.put('/api/posts/:id', async (req, res) => {
-    if (req.session.user) {
-        try {
-            const postId = req.params.id;
-            const { title, content, tags } = req.body;
-            const updatedPost = await Post.findOneAndUpdate(
-                { _id: postId, author: req.session.user.id },
-                { title, content, tags: tags.split(',').map(tag => tag.trim()) },
-                { new: true }
-            );
-            if (!updatedPost) {
-                return res.status(404).json({ error: 'Post not found or you are not the author' });
-            }
-            res.json({ message: 'Post updated successfully', post: updatedPost });
-        } catch (err) {
-            console.error('Error updating post:', err);
-            res.status(500).json({ error: 'Error updating post' });
-        }
-    } else {
-        res.status(401).json({ error: 'Unauthorized' });
-    }
-});
-
+// Фавиконка
 app.get('/favicon.ico', (req, res) => {
-    const faviconPath = path.join(ROOT_DIR, 'frontend/favicon.ico');
+    const faviconPath = path.join(__dirname, 'frontend/favicon.ico');
     if (fs.existsSync(faviconPath)) {
         res.sendFile(faviconPath);
     } else {
         res.status(404).send('Favicon not found');
     }
 });
+
 
 // Сохранение токена
 const saveToken = (token) => {
@@ -311,6 +267,15 @@ app.post('/register', async (req, res) => {
         res.status(500).send('Error: Unable to register.');
     }
 });
+
+const generateJWT = (user) => {
+    return jwt.sign(
+        { id: user._id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+};
+
     
 // Логин пользователя
 app.post('/login', async (req, res) => {
@@ -320,24 +285,25 @@ app.post('/login', async (req, res) => {
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.send('User not found.');
+            return res.status(400).json({ message: 'User not found.' });
         }
 
         if (!user.verified) {
-            return res.send('Please verify your email before logging in.');
+            return res.status(400).json({ message: 'Please verify your email before logging in.' });
         }
 
         if (await bcrypt.compare(password, user.password)) {
-            req.session.user = { id: user._id, email: user.email };
-            res.redirect('/profile');
+            const token = generateJWT(user);
+            res.json({ message: 'Login successful', token });
         } else {
-            res.send('Invalid email or password.');
+            res.status(400).json({ message: 'Invalid email or password.' });
         }
     } catch (err) {
         console.error('Error during login:', err);
-        res.send('Error: Unable to log in.');
+        res.status(500).json({ message: 'Error: Unable to log in.' });
     }
 });
+
 
 //Отправка сообщений
 const transporter = nodemailer.createTransport({
@@ -464,6 +430,11 @@ app.get('/api/recommended-posts', async (req, res) => {
         res.status(500).json({ error: 'Error fetching posts' });
     }
 });
+
+// JWT
+require('dotenv').config();
+const jwt = require('jsonwebtoken');
+
 
 
 app.get('/all-posts', (req, res) => {
