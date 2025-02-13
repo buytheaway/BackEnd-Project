@@ -7,7 +7,6 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
-const jwt = require('jsonwebtoken');
 
 
 const app = express();
@@ -483,7 +482,6 @@ app.get('/api/recommended-posts', async (req, res) => {
 
 // JWT
 require('dotenv').config();
-const jwt = require('jsonwebtoken');
 
 
 
