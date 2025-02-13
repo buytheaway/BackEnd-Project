@@ -7,6 +7,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
 
 
 const app = express();
@@ -84,8 +85,23 @@ app.use(session({
 }));
 
 
+
+
+// Маршруты
+const jwt = require('jsonwebtoken');
+require('dotenv').config(); // Загружаем переменные окружения
+
+const generateJWT = (user) => {
+    return jwt.sign(
+        { id: user._id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+};
+
+// Middleware для проверки JWT
 const authenticateJWT = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1]; // Берем токен из заголовка Authorization
+    const token = req.headers.authorization?.split(' ')[1]; // Берём токен из заголовка Authorization
 
     if (!token) {
         return res.status(401).json({ message: 'Unauthorized: No token provided' });
@@ -101,8 +117,48 @@ const authenticateJWT = (req, res, next) => {
 };
 
 // Маршруты
+app.get('/', (req, res) => {
+    res.sendFile(path.join(ROOT_DIR, 'frontend/html/index.html'));
+});
 
-// Получение данных профиля
+app.get('/login', (req, res) => {
+    const filePath = path.join(__dirname, 'frontend/html/login.html');
+    console.log(`Serving login page from: ${filePath}`);
+
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.error("Error serving file:", err);
+            res.status(500).send("Internal Server Error");
+        }
+    });
+});
+
+app.get('/register', (req, res) => {
+    const filePath = path.join(__dirname, 'frontend/html/reg.html');
+    console.log(`Serving login page from: ${filePath}`);
+
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.error("Error serving file:", err);
+            res.status(500).send("Internal Server Error");
+        }
+    });
+});
+
+// Профиль пользователя (теперь с JWT)
+app.get('/profile', authenticateJWT, async (req, res) => {
+    const filePath = path.join(__dirname, 'frontend/html/profile.html');
+    console.log(`Serving profile page from: ${filePath}`);
+    
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.error("Error serving profile page:", err);
+            res.status(500).send("Internal Server Error");
+        }
+    });
+});
+
+// Получение данных профиля (JWT)
 app.get('/profile-data', authenticateJWT, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
@@ -118,7 +174,7 @@ app.get('/profile-data', authenticateJWT, async (req, res) => {
     }
 });
 
-// Получение постов пользователя
+// Получение постов пользователя (JWT)
 app.get('/user-posts', authenticateJWT, async (req, res) => {
     try {
         const userPosts = await Post.find({ author: req.user.id });
@@ -129,7 +185,7 @@ app.get('/user-posts', authenticateJWT, async (req, res) => {
     }
 });
 
-// Создание поста
+// Создание поста (JWT)
 app.post('/create-post', authenticateJWT, async (req, res) => {
     const { title, content, tags } = req.body;
     try {
@@ -147,7 +203,7 @@ app.post('/create-post', authenticateJWT, async (req, res) => {
     }
 });
 
-// Удаление поста
+// Удаление поста (JWT)
 app.delete('/api/posts/:id', authenticateJWT, async (req, res) => {
     try {
         const postId = req.params.id;
@@ -161,7 +217,7 @@ app.delete('/api/posts/:id', authenticateJWT, async (req, res) => {
     }
 });
 
-// Обновление поста
+// Обновление поста (JWT)
 app.put('/api/posts/:id', authenticateJWT, async (req, res) => {
     try {
         const postId = req.params.id;
@@ -182,7 +238,7 @@ app.put('/api/posts/:id', authenticateJWT, async (req, res) => {
 
 // Фавиконка
 app.get('/favicon.ico', (req, res) => {
-    const faviconPath = path.join(__dirname, 'frontend/favicon.ico');
+    const faviconPath = path.join(ROOT_DIR, 'frontend/favicon.ico');
     if (fs.existsSync(faviconPath)) {
         res.sendFile(faviconPath);
     } else {
@@ -268,13 +324,7 @@ app.post('/register', async (req, res) => {
     }
 });
 
-const generateJWT = (user) => {
-    return jwt.sign(
-        { id: user._id, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN }
-    );
-};
+
 
     
 // Логин пользователя
