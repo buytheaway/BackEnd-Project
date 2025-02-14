@@ -1,6 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Load user profile data
-    fetch('/profile-data')
+    fetch('/profile-data', {
+        method: 'GET',
+        credentials: 'include' // Разрешает куки при запросе
+    })
+    
         .then(response => response.json())
         .then(data => {
             if (data.error) {
@@ -12,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         })
         .catch(err => console.error('Error loading profile data:', err));
+    
 
     // Form for creating a post
     const createPostForm = document.getElementById('createPostForm');

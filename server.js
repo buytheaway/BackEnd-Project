@@ -8,6 +8,8 @@ const bcrypt = require('bcrypt');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+
 
 const app = express();
 const PORT = 8080;
@@ -75,6 +77,8 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'frontend')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(cookieParser());
+
 
 
 // Маршруты
@@ -91,7 +95,7 @@ const generateJWT = (user) => {
 
 // Middleware для проверки JWT
 const authenticateJWT = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1]; // Берём токен из заголовка Authorization
+    const token = req.cookies.token; // Читаем из куки
 
     if (!token) {
         return res.status(401).json({ message: 'Unauthorized: No token provided' });
@@ -101,10 +105,11 @@ const authenticateJWT = (req, res, next) => {
         if (err) {
             return res.status(403).json({ message: 'Forbidden: Invalid token' });
         }
-        req.user = decoded; // Сохраняем данные пользователя в req.user
+        req.user = decoded;
         next();
     });
 };
+
 
 // Маршруты
 app.get('/', (req, res) => {
@@ -121,7 +126,7 @@ app.get('/login', (req, res) => {
             res.status(500).send("Internal Server Error");
         }
     });
-});
+
 
 app.get('/register', (req, res) => {
     const filePath = path.join(__dirname, 'frontend/html/reg.html');
@@ -334,7 +339,12 @@ app.post('/login', async (req, res) => {
 
         if (await bcrypt.compare(password, user.password)) {
             const token = generateJWT(user);
-            res.json({ message: 'Login successful', token });
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production', // Включить только в продакшене
+                maxAge: 60 * 60 * 1000 // 1 час
+            });
+            res.json({ message: 'Login successful' });
         } else {
             res.status(400).json({ message: 'Invalid email or password.' });
         }
@@ -343,6 +353,7 @@ app.post('/login', async (req, res) => {
         res.status(500).json({ message: 'Error: Unable to log in.' });
     }
 });
+
 
 
 //Отправка сообщений
@@ -378,11 +389,12 @@ app.post('/send-email', async (req, res) => {
 
 // Выход из системы
 app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/login');
+    res.clearCookie('token'); // Удаляем токен из куки
+    res.json({ message: 'Logged out successfully' });
 });
 
-app.get('/api/all-posts', async (req, res) => {
+
+app.get('/api/all-posts', authenticateJWT, async (req, res) => { // Добавил authenticateJWT
     const { tag, sort, page = 1, username } = req.query;
     const limit = 10;
     try {
@@ -421,6 +433,7 @@ app.get('/api/all-posts', async (req, res) => {
         res.status(500).json({ error: 'Error fetching posts' });
     }
 });
+    
 
 // API для рекомендаций (рандомные посты из базы данных)
 app.get('/api/recommended-posts', async (req, res) => {
@@ -483,4 +496,4 @@ app.get('/all-posts', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
-});
+})});

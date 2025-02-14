@@ -14,10 +14,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (username) query.append('username', username);
         if (sort) query.append('sort', sort);
 
-        fetch(`/api/all-posts?${query.toString()}`)
+        fetch(`/api/all-posts?${query.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}` // <-- Добавлен заголовок
+            }
+        })
             .then(response => response.json())
             .then(data => {
-                if (reset) postsContainer.innerHTML = ''; // Clear for new filters
+                if (reset) postsContainer.innerHTML = ''; // Очищаем контейнер при новом фильтре
                 data.posts.forEach(post => {
                     const postDiv = document.createElement('div');
                     postDiv.classList.add('post');
@@ -51,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tag = document.getElementById('tag').value;
         const username = document.getElementById('username').value;
         const sort = document.getElementById('sort').value;
-        page = 1; // Reset page for new filter
+        page = 1; // Сбрасываем страницу при новом фильтре
         loadPosts(tag, username, sort, true);
     });
 
