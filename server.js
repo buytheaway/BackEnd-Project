@@ -7,7 +7,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
-
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = 8080;
@@ -75,17 +75,10 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'frontend')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(session({
-    secret: 'your_secret_key',
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: MONGO_URI }), 
-    cookie: { maxAge: 3600000 } // Cookie действует 1 час
-}));
 
 
 // Маршруты
-const jwt = require('jsonwebtoken');
+
 require('dotenv').config(); // Загружаем переменные окружения
 
 const generateJWT = (user) => {
