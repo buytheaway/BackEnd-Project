@@ -95,7 +95,7 @@ const generateJWT = (user) => {
 
 // Middleware для проверки JWT
 const authenticateJWT = (req, res, next) => {
-    const token = req.cookies.token; // Читаем из куки
+    const token = req.cookies.token || req.headers.authorization?.split(' ')[1]; // Читаем сначала из куки, потом из заголовка
 
     if (!token) {
         return res.status(401).json({ message: 'Unauthorized: No token provided' });
@@ -109,6 +109,7 @@ const authenticateJWT = (req, res, next) => {
         next();
     });
 };
+
 
 
 // Маршруты
